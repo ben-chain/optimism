@@ -142,6 +142,26 @@ describe('Lib_MerkleTrie', () => {
         }
       })
     }
+
+    describe(`when two elements are in adjacent extension nodes`, () => {
+      let generator: TrieTestGenerator
+      before(async () => {
+        generator = await TrieTestGenerator.fromNodes({
+          nodes: [
+            {key: '0x12345600', val: '0x1337'},
+            {key: '0x12345600aa', val: '0xbeef'},
+            {key: '0x12345600bb', val: '0xdead'}
+          ],
+          secure: false
+        })
+      })
+      it(`should correctly get the value of the node`, async () => {
+        const test = await generator.makeInclusionProofTest('0x12345600bb')
+        expect(
+          await Lib_MerkleTrie.get(test.key, test.proof, test.root)
+        ).to.deep.equal([true, test.val])
+      })
+    })
   })
 
   describe(`inside a trie with one node`, () => {

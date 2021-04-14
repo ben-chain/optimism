@@ -314,8 +314,10 @@ library Lib_MerkleTrie {
                     currentNodeID = bytes32(RLP_NULL);
                     break;
                 } else if (prefix == PREFIX_EXTENSION_EVEN || prefix == PREFIX_EXTENSION_ODD) {
+                    // FIX: Delete next line, uncomment the fix on the following line.
                     if (sharedNibbleLength == 0) {
-                        // Our extension node doesn't share any part of our key.
+                    // if (sharedNibbleLength != pathRemainder.length) {
+                        // Our extension node is not identical to the remainder.
                         // We've hit the end of this path, updates will need to modify this extension.
                         currentNodeID = bytes32(RLP_NULL);
                         break;
