@@ -140,7 +140,7 @@ library Lib_ExecutionManagerWrapper {
     /**
      * Performs a safe ovmSETCODE call.
      */
-    function safeSETCODE(
+    function ovmSETCODE(
         address _address,
         bytes memory _code
     )
