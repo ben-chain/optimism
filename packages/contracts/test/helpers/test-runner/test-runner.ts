@@ -29,7 +29,7 @@ import {
   isTestStep_EXTCODECOPY,
   isTestStep_REVERT,
   isTestStep_SETCODE,
-  isTestStep_SETSTORAGE
+  isTestStep_SETSTORAGE,
 } from './test.types'
 import { encodeRevertData, REVERT_FLAGS } from '../codec'
 import {
