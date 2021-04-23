@@ -426,7 +426,9 @@ export class ExecutionManagerTestRunner {
       isTestStep_EXTCODESIZE(step) ||
       isTestStep_EXTCODEHASH(step) ||
       isTestStep_EXTCODECOPY(step) ||
-      isTestStep_CREATEEOA(step)
+      isTestStep_CREATEEOA(step) ||
+      isTestStep_SETCODE(step) ||
+      isTestStep_SETSTORAGE(step)
     ) {
       functionParams = Object.values(step.functionParams)
     } else if (isTestStep_CALL(step)) {
