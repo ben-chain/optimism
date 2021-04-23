@@ -9,7 +9,7 @@ import {
   OVM_TX_GAS_LIMIT,
   NON_NULL_BYTES32,
   getStorageXOR,
-  REVERT_FLAGS
+  REVERT_FLAGS,
 } from '../../../../helpers'
 import { predeploys } from '../../../../../src/predeploys'
 
