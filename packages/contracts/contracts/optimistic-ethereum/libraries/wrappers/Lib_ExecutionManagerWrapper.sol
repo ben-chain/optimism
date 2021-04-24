@@ -130,75 +130,13 @@ library Lib_ExecutionManagerWrapper {
             uint256
         )
     {
-        bytes memory returndata = _callWrapperContract(
+        bytes memory returndata = _safeExecutionManagerInteraction(
             abi.encodeWithSignature(
                 "ovmCHAINID()"
             )
         );
 
         return abi.decode(returndata, (uint256));
-    }
-
-    /**
-     * Performs a safe ovmADDRESS call.
-     * @return Result of calling ovmADDRESS.
-     */
-    function ovmADDRESS()
-        internal
-        returns (
-            address
-        )
-    {
-        bytes memory returndata = _callWrapperContract(
-            abi.encodeWithSignature(
-                "ovmADDRESS()"
-            )
-        );
-
-        return abi.decode(returndata, (address));
-    }
-
-    /**
-     * Calls the ovmSETCODE opcode. Only callable by the upgrade deployer.
-     * @param _address Address to set the code of.
-     * @param _code New code for the address.
-     */
-    function ovmSETCODE(
-        address _address,
-        bytes memory _code
-    )
-        internal
-    {
-        _callWrapperContract(
-            abi.encodeWithSignature(
-                "ovmSETCODE(address,bytes)",
-                _address,
-                _code
-            )
-        );
-    }
-
-    /**
-     * Calls the ovmSETSTORAGE opcode. Only callable by the upgrade deployer.
-     * @param _address Address to set a storage slot for.
-     * @param _key Storage slot key to modify.
-     * @param _value Storage slot value.
-     */
-    function ovmSETSTORAGE(
-        address _address,
-        bytes32 _key,
-        bytes32 _value
-    )
-        internal
-    {
-        _callWrapperContract(
-            abi.encodeWithSignature(
-                "ovmSETSTORAGE(address,bytes32,bytes32)",
-                _address,
-                _key,
-                _value
-            )
-        );
     }
 
 

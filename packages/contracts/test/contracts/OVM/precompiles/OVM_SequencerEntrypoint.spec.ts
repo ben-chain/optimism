@@ -8,7 +8,7 @@ import { toPlainObject } from 'lodash'
 
 /* Internal Imports */
 import { DEFAULT_EIP155_TX } from '../../../helpers'
-import { getContractInterface, predeploys } from '../../../../src'
+import { getContractInterface, getContractFactory } from '../../../../src'
 
 describe('OVM_SequencerEntrypoint', () => {
   const iOVM_ECDSAContractAccount = getContractInterface(
@@ -49,17 +49,60 @@ describe('OVM_SequencerEntrypoint', () => {
   })
 
   describe('fallback()', async () => {
-    it('should call ovmCREATEEOA when ovmEXTCODESIZE returns 0', async () => {
+    it('should call EIP155', async () => {
       const transaction = DEFAULT_EIP155_TX
       const encodedTransaction = await wallet.signTransaction(transaction)
 
-      // Just unbind the smock in case it's there during this test for some reason.
-      await unbind(await wallet.getAddress())
+      await Helper_PredeployCaller.callPredeploy(
+        OVM_SequencerEntrypoint.address,
+        encodedTransaction
+      )
 
-      await signer.sendTransaction({
-        to: OVM_SequencerEntrypoint.address,
-        data: encodedTransaction,
+      const expectedEOACalldata = iOVM_ECDSAContractAccount.encodeFunctionData(
+        'execute',
+        [encodedTransaction]
+      )
+      const ovmCALL: any = Mock__OVM_ExecutionManager.smocked.ovmCALL.calls[0]
+      expect(ovmCALL._address).to.equal(await wallet.getAddress())
+      expect(ovmCALL._calldata).to.equal(expectedEOACalldata)
+    })
+
+    it('should send correct calldata if tx is a create', async () => {
+      const transaction = { ...DEFAULT_EIP155_TX, to: '' }
+      const encodedTransaction = await wallet.signTransaction(transaction)
+
+      await Helper_PredeployCaller.callPredeploy(
+        OVM_SequencerEntrypoint.address,
+        encodedTransaction
+      )
+
+      const expectedEOACalldata = iOVM_ECDSAContractAccount.encodeFunctionData(
+        'execute',
+        [encodedTransaction]
+      )
+      const ovmCALL: any = Mock__OVM_ExecutionManager.smocked.ovmCALL.calls[0]
+      expect(ovmCALL._address).to.equal(await wallet.getAddress())
+      expect(ovmCALL._calldata).to.equal(expectedEOACalldata)
+    })
+
+    it(`should call ovmCreateEOA when ovmEXTCODESIZE returns 0`, async () => {
+      let isFirstCheck = true
+      Mock__OVM_ExecutionManager.smocked.ovmEXTCODESIZE.will.return.with(() => {
+        if (isFirstCheck) {
+          isFirstCheck = false
+          return 0
+        } else {
+          return 1
+        }
       })
+
+      const transaction = DEFAULT_EIP155_TX
+      const encodedTransaction = await wallet.signTransaction(transaction)
+
+      await Helper_PredeployCaller.callPredeploy(
+        OVM_SequencerEntrypoint.address,
+        encodedTransaction
+      )
 
       const call: any = Mock__OVM_ExecutionManager.smocked.ovmCREATEEOA.calls[0]
       const eoaAddress = ethers.utils.recoverAddress(call._messageHash, {
@@ -69,46 +112,6 @@ describe('OVM_SequencerEntrypoint', () => {
       })
 
       expect(eoaAddress).to.equal(await wallet.getAddress())
-    })
-
-    it('should call EIP155', async () => {
-      const transaction = DEFAULT_EIP155_TX
-      const encodedTransaction = await wallet.signTransaction(transaction)
-
-      const Mock__wallet = await smockit(iOVM_ECDSAContractAccount, {
-        address: await wallet.getAddress(),
-      })
-
-      await signer.sendTransaction({
-        to: OVM_SequencerEntrypoint.address,
-        data: encodedTransaction,
-      })
-
-      expect(
-        toPlainObject(Mock__wallet.smocked.execute.calls[0])
-      ).to.deep.include({
-        _encodedTransaction: encodedTransaction,
-      })
-    })
-
-    it('should send correct calldata if tx is a create', async () => {
-      const transaction = { ...DEFAULT_EIP155_TX, to: '' }
-      const encodedTransaction = await wallet.signTransaction(transaction)
-
-      const Mock__wallet = await smockit(iOVM_ECDSAContractAccount, {
-        address: await wallet.getAddress(),
-      })
-
-      await signer.sendTransaction({
-        to: OVM_SequencerEntrypoint.address,
-        data: encodedTransaction,
-      })
-
-      expect(
-        toPlainObject(Mock__wallet.smocked.execute.calls[0])
-      ).to.deep.include({
-        _encodedTransaction: encodedTransaction,
-      })
     })
   })
 })
