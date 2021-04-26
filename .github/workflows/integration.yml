@@ -54,8 +54,8 @@ jobs:
 
       - name: Test optimism-tutorial contracts
         working-directory: ./examples/optimism-tutorial
-        run: yarn hardhat test && yarn hardhat --network optimism test
+        run: yarn hardhat test && yarn hardhat test --network optimism 
 
       - name: Deploy optimism-tutorial contracts
         working-directory: ./examples/optimism-tutorial
-        run: yarn hardhat deploy && yarn hardhat --network optimism deploy
+        run: yarn hardhat deploy && yarn hardhat deploy --network optimism
