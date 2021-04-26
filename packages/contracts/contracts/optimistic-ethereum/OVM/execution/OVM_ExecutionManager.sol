@@ -161,7 +161,7 @@ contract OVM_ExecutionManager is iOVM_ExecutionManager, Lib_AddressResolver {
         address _ovmStateManager
     )
         override
-        external
+        public
         returns (
             bytes memory
         )
