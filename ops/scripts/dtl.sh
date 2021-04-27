@@ -8,5 +8,4 @@ if [[ ! -z "$URL" ]]; then
     export DATA_TRANSPORT_LAYER__ADDRESS_MANAGER=$(echo $ADDRESSES | jq -r '.AddressManager')
 fi
 
-# go
 exec node dist/src/services/run.js
