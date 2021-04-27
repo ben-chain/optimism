@@ -38,26 +38,20 @@ describe('OVM Self-Upgrades', async () => {
 
   const applyChugsplashInstructions = async (instructions: ChugSplashInstructions) => {
     for (const instruction of instructions) {
-      // TODO: remove this try.  The TX errors for the same reason that deposits appear to fail
-      try {  
-        let res
-        if (isSetStorageInstruction(instruction)) {
-          res = await OVM_UpgradeExecutor.setStorage(
-            instruction.target,
-            instruction.key,
-            instruction.value
-          )
-        } else {
-          res = await OVM_UpgradeExecutor.setCode(
-            instruction.target,
-            instruction.code
-          )
-        }
-        await res.wait() // TODO: promise.all
-      } catch (e) {
-        console.log('failedinstruction')
-        console.log(e)
+      let res
+      if (isSetStorageInstruction(instruction)) {
+        res = await OVM_UpgradeExecutor.setStorage(
+          instruction.target,
+          instruction.key,
+          instruction.value
+        )
+      } else {
+        res = await OVM_UpgradeExecutor.setCode(
+          instruction.target,
+          instruction.code
+        )
       }
+      await res.wait() // TODO: promise.all
     }
   }
 
@@ -111,6 +105,11 @@ describe('OVM Self-Upgrades', async () => {
       const DummyContract = await (
         await ethers.getContractFactory('SimpleStorage', l2Wallet)
       ).deploy()
+
+      console.log('code BEFORE upgrade:')
+      console.log(
+        await l2Provider.getCode(DummyContract.address)
+      )
 
       const basicStorageUpgrade: ChugSplashInstructions = [
         {
