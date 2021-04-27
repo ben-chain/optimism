@@ -174,8 +174,8 @@ describe('Basic RPC tests', () => {
       // 96 bytes * 16 per non zero byte
       const onesCost = BigNumber.from(96).mul(16)
       const expectedCost = dataLen
-        .map((len) => BigNumber.from(len).mul(4))
-        .map((zerosCost) => zerosCost.add(onesCost))
+        .map(len => BigNumber.from(len).mul(4))
+        .map(zerosCost => zerosCost.add(onesCost))
 
       // Repeat this test for a series of possible transaction sizes.
       for (let i = 0; i < dataLen.length; i++) {
@@ -187,11 +187,8 @@ describe('Basic RPC tests', () => {
 
         // we normalize by gwei here because the RPC does it as well, since the
         // user provides a 1gwei gas price when submitting txs via the eth_gasPrice
-        // rpc call. The smallest possible value for the expected cost is 21000
-        let expected = expectedCost[i].mul(l1GasPrice).div(GWEI)
-        if (expected.lt(BigNumber.from(21000))) {
-          expected = BigNumber.from(21000)
-        }
+        // rpc call
+        const expected = expectedCost[i].mul(l1GasPrice).div(GWEI)
         expect(estimate).to.be.deep.eq(expected)
       }
     })
