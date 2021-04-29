@@ -120,7 +120,8 @@ export const handleEventsSequencerBatchAppended: EventHandlerSet<
           origin: null,
           data: toHexString(sequencerTransaction),
           queueOrigin: 'sequencer',
-          value: decoded ? decoded.value : '0x0',
+          type,
+          value: decoded.value,
           queueIndex: null,
           decoded,
           confirmed: true,
@@ -152,6 +153,7 @@ export const handleEventsSequencerBatchAppended: EventHandlerSet<
           origin: constants.AddressZero,
           data: '0x',
           queueOrigin: 'l1',
+          type: 'EIP155',
           value: '0x0',
           queueIndex: queueIndex.toNumber(),
           decoded: null,
@@ -250,6 +252,7 @@ const maybeDecodeSequencerBatchTransaction = (
         nonce: BigNumber.from(decodedTx.nonce).toNumber(),
         gasPrice: BigNumber.from(decodedTx.gasPrice).toNumber(),
         gasLimit: BigNumber.from(decodedTx.gasLimit).toNumber(),
+        value: toRpcHexString(decodedTx.value),
         target: toHexString(decodedTx.to), // Maybe null this out for creations?
         data: toHexString(decodedTx.data),
         sig: {
