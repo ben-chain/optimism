@@ -1,10 +1,13 @@
 import { injectL2Context } from '@eth-optimism/core-utils'
-import { Wallet, BigNumber, ethers } from 'ethers'
+import { Wallet, BigNumber, Contract } from 'ethers'
+import { ethers } from 'hardhat'
 import chai, { expect } from 'chai'
-import { sleep, l2Provider, GWEI } from './shared/utils'
+import { sleep, l2Provider, GWEI, encodeSolidityRevertMessage, l1Wallet } from './shared/utils'
 import chaiAsPromised from 'chai-as-promised'
 import { OptimismEnv } from './shared/env'
+import { TransactionRequest } from '@ethersproject/abstract-provider'
 chai.use(chaiAsPromised)
+
 
 describe('Basic RPC tests', () => {
   let env: OptimismEnv
@@ -89,6 +92,39 @@ describe('Basic RPC tests', () => {
       await expect(env.l2Wallet.sendTransaction(tx)).to.be.rejectedWith(
         'invalid transaction: insufficient funds for gas * price + value'
       )
+    })
+  })
+
+  describe('eth_call', () => {
+    it('should correctly return solidity revert data', async () => {
+      const Factory__Reverter = await ethers.getContractFactory('Reverter', wallet)
+      const Reverter = await Factory__Reverter.connect(env.l2Wallet).deploy()
+      await Reverter.deployTransaction.wait()
+
+      const tx: TransactionRequest = {
+        to: Reverter.address,
+        data: Reverter.interface.encodeFunctionData('doRevert')
+      }
+      const revertData = await provider.call(tx)
+      const expectedRevertData = encodeSolidityRevertMessage(
+        await Reverter.revertMessage()
+      )
+      expect(revertData).to.eq(
+        expectedRevertData
+      )
+    })
+
+    it('should return the correct error message when attempting to deploy unsafe initcode', async () => {
+      // PUSH1 0x00 PUSH1 0x00 SSTORE
+      const unsafeCode = '0x6000600055'
+      const tx: TransactionRequest = {
+        data: unsafeCode
+      }
+      const result = await provider.call(tx)
+      const expected = encodeSolidityRevertMessage(
+        'Contract creation code contains unsafe opcodes. Did you use the right compiler or pass an unsafe constructor argument?'
+      )
+      expect(result).to.eq(expected)
     })
   })
 
