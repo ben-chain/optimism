@@ -1,5 +1,12 @@
 # @eth-optimism/hardhat-ovm
 
+## 0.1.1
+
+### Patch Changes
+
+- d32d915: default to 0 gasPrice if none provided in the network config
+- cc4b096: Ensure hardhat does not fail if no input sources provided
+
 ## 0.1.0
 
 ### Minor Changes
