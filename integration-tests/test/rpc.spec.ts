@@ -135,6 +135,21 @@ describe('Basic RPC tests', () => {
       expectedReverterRevertData = encodeSolidityRevertMessage(revertMessage)
     })
 
+    it('should correctly identify call out-of-gas', async () => {
+      let errored = false
+      try {
+        await provider.call({
+          ...revertingTx,
+          gasLimit: 21_000,
+        })
+      } catch (e) {
+        errored = true
+        expect(e.body).to.include('out of gas')
+      }
+
+      expect(errored).to.be.true
+    })
+
     it('should correctly return solidity revert data from a call', async () => {
       const revertData = await provider.call(revertingTx)
       const expectedRevertData = encodeSolidityRevertMessage(revertMessage)
@@ -149,6 +164,21 @@ describe('Basic RPC tests', () => {
       const revertData = await provider.call(revertingDeployTx)
 
       expect(revertData).to.eq(expectedReverterRevertData)
+    })
+
+    it('should correctly identify contract creation out of gas', async () => {
+      let errored = false
+      try {
+        await provider.call({
+          ...revertingDeployTx,
+          gasLimit: 30_000,
+        })
+      } catch (e) {
+        errored = true
+        expect(e.body).to.include('out of gas')
+      }
+
+      expect(errored).to.be.true
     })
 
     it('should return the correct error message when attempting to deploy unsafe initcode', async () => {
