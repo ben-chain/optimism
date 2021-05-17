@@ -5,7 +5,7 @@ pragma abicoder v2;
 
 import {
     OVM_ExecutionManager
-} from "@eth-optimism/contracts/OVM/execution/OVM_ExecutionManager.sol";
+} from "@eth-optimism/contracts/contracts/optimistic-ethereum/OVM/execution/OVM_ExecutionManager.sol";
 
 contract NewExecutionManager is OVM_ExecutionManager {
     constructor(

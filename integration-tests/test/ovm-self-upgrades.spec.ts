@@ -173,7 +173,7 @@ describe.only('OVM Self-Upgrades', async () => {
     })
   })
 
-  describe('L2 virtualization contracts can themselves be upgraded', async () => {
+  describe.only('L2 virtualization contracts can themselves be upgraded', async () => {
     it('does a basic upgrade to the Execution Manager', async () => {
       const executionManagerUpgrade: ChugSplashAction = {
         target: '0xdeaddeaddeaddeaddeaddeaddeaddeaddead0005',
