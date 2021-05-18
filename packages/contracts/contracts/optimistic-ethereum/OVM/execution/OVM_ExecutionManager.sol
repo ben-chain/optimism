@@ -146,6 +146,17 @@ contract OVM_ExecutionManager is iOVM_ExecutionManager, Lib_AddressResolver {
         _;
     }
 
+    /**
+     * Modifies an EM method so that only a given OVM address can invoke it.
+     */
+    modifier onlyCallableBy(
+        address _allowed
+    ) {
+        if (ovmADDRESS() != _allowed) {
+            _revertWithFlag(RevertFlag.CALLER_NOT_ALLOWED);
+        }
+        _;
+    }
 
     /************************************
      * Transaction Execution Entrypoint *
@@ -1881,8 +1892,10 @@ contract OVM_ExecutionManager is iOVM_ExecutionManager, Lib_AddressResolver {
     )
         override
         external
+        onlyCallableBy(0x420000000000000000000000000000000000000D)
     {
-        // TODO: IMPLEMENT ME
+        _checkAccountLoad(_address);
+        ovmStateManager.putAccountCode(_address, _code);
     }
 
     /**
@@ -1898,8 +1911,13 @@ contract OVM_ExecutionManager is iOVM_ExecutionManager, Lib_AddressResolver {
     )
         override
         external
+        onlyCallableBy(0x420000000000000000000000000000000000000D)
     {
-        // TODO: IMPLEMENT ME
+        _putContractStorage(
+            _address,
+            _key,
+            _value
+        );
     }
 
 
