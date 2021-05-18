@@ -102,13 +102,13 @@ type signature struct {
 // When this struct exists in other structs and is set to `nil`,
 // it means that the decoding failed.
 type decoded struct {
-	Signature signature       `json:"sig"`
-	Value     hexutil.Uint64  `json:"value"`
-	GasLimit  uint64          `json:"gasLimit"`
-	GasPrice  uint64          `json:"gasPrice"`
-	Nonce     uint64          `json:"nonce"`
-	Target    *common.Address `json:"target"`
-	Data      hexutil.Bytes   `json:"data"`
+	Signature signature      `json:"sig"`
+	Value     hexutil.Uint64 `json:"value"`
+	GasLimit  uint64         `json:"gasLimit"`
+	GasPrice  uint64         `json:"gasPrice"`
+	Nonce     uint64         `json:"nonce"`
+	Target    common.Address `json:"target"`
+	Data      hexutil.Bytes  `json:"data"`
 }
 
 // RollupClient is able to query for information

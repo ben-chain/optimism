@@ -383,29 +383,28 @@ func (evm *EVM) Call(caller ContractRef, addr common.Address, input []byte, gas 
 
 	if UsingOVM {
 		// OVM_ENABLED
+
 		if evm.depth == 0 {
 			// We're back at the root-level message call, so we'll need to modify the return data
 			// sent to us by the OVM_ExecutionManager to instead be the intended return data.
 
-			// Attempt to decode the returndata as as ExecutionManager.run when
-			// it is not an `eth_call` and as ExecutionManager.simulateMessage
-			// when it is an `eth_call`. If the data is not decodable as ABI
-			// encoded bytes, then return nothing. If the data is able to be
-			// decoded as bytes, then attempt to decode as (bool, bytes)
-			isDecodable := true
-			returnData := runReturnData{}
-			if err := codec.Unpack(&returnData, "blob", ret); err != nil {
-				isDecodable = false
-			}
+			if len(ret) >= 96 {
+				// We expect that EOA contracts return at least 96 bytes of data, where the first
+				// 32 bytes are the boolean success value and the next 64 bytes are unnecessary
+				// ABI encoding data. The actual return data starts at the 96th byte and can be
+				// empty.
+				success := ret[:32]
+				ret = ret[96:]
 
-			switch isDecodable {
-			case true:
-				inner := innerData{}
-				// If this fails to decode, the nil values will be set in
-				// `inner`, meaning that it will be interpreted as reverted
-				// execution with empty returndata
-				_ = codec.Unpack(&inner, "call", returnData.ReturnData)
-				if !inner.Success {
+				if !bytes.Equal(success, AbiBytesTrue) && !bytes.Equal(success, AbiBytesFalse) {
+					// If the first 32 bytes not either are the ABI encoding of "true" or "false",
+					// then the user hasn't correctly ABI encoded the result. We return the null
+					// hex string as a default here (an annoying default that would convince most
+					// people to just use the standard form).
+					ret = common.FromHex("0x")
+				} else if bytes.Equal(success, AbiBytesFalse) {
+					// If the first 32 bytes are the ABI encoding of "false", then we need to add an
+					// artificial error that represents the revert.
 					err = errExecutionReverted
 				}
 				ret = inner.ReturnData

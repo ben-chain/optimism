@@ -130,7 +130,7 @@ library Lib_ExecutionManagerWrapper {
             uint256
         )
     {
-        bytes memory returndata = _callWrapperContract(
+        bytes memory returndata = _safeExecutionManagerInteraction(
             abi.encodeWithSignature(
                 "ovmCHAINID()"
             )
@@ -139,29 +139,8 @@ library Lib_ExecutionManagerWrapper {
         return abi.decode(returndata, (uint256));
     }
 
-    /**
-     * Performs a safe ovmADDRESS call.
-     * @return Result of calling ovmADDRESS.
-     */
-    function ovmADDRESS()
-        internal
-        returns (
-            address
-        )
-    {
-        bytes memory returndata = _callWrapperContract(
-            abi.encodeWithSignature(
-                "ovmADDRESS()"
-            )
-        );
-
-        return abi.decode(returndata, (address));
-    }
-
-    /**
-     * Calls the ovmSETCODE opcode. Only callable by the upgrade deployer.
-     * @param _address Address to set the code of.
-     * @param _code New code for the address.
+    /*
+     * Performs a safe ovmSETCODE call.
      */
     function ovmSETCODE(
         address _address,
@@ -169,7 +148,7 @@ library Lib_ExecutionManagerWrapper {
     )
         internal
     {
-        _callWrapperContract(
+        _safeExecutionManagerInteraction(
             abi.encodeWithSignature(
                 "ovmSETCODE(address,bytes)",
                 _address,
@@ -179,10 +158,7 @@ library Lib_ExecutionManagerWrapper {
     }
 
     /**
-     * Calls the ovmSETSTORAGE opcode. Only callable by the upgrade deployer.
-     * @param _address Address to set a storage slot for.
-     * @param _key Storage slot key to modify.
-     * @param _value Storage slot value.
+     * Performs a safe ovmSETSTORAGE call.
      */
     function ovmSETSTORAGE(
         address _address,
@@ -191,7 +167,7 @@ library Lib_ExecutionManagerWrapper {
     )
         internal
     {
-        _callWrapperContract(
+        _safeExecutionManagerInteraction(
             abi.encodeWithSignature(
                 "ovmSETSTORAGE(address,bytes32,bytes32)",
                 _address,

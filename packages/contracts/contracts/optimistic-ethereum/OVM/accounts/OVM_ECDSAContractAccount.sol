@@ -73,7 +73,7 @@ contract OVM_ECDSAContractAccount is iOVM_ECDSAContractAccount {
         // recovered address of the user who signed this message. This is how we manage to shim
         // account abstraction even though the user isn't a contract.
         require(
-            transaction.sender() == Lib_ExecutionManagerWrapper.ovmADDRESS(),
+            transaction.sender() == address(this),
             "Signature provided for EOA transaction execution is invalid."
         );
 
@@ -99,6 +99,7 @@ contract OVM_ECDSAContractAccount is iOVM_ECDSAContractAccount {
             "Fee was not transferred to relayer."
         );
 
+        // Contract creations are signalled by sending a transaction to the zero address.
         if (transaction.isCreate) {
             // TEMPORARY: Disable value transfer for contract creations.
             require(
@@ -137,7 +138,6 @@ contract OVM_ECDSAContractAccount is iOVM_ECDSAContractAccount {
                     ),
                     "Value could not be transferred to recipient."
                 );
-
                 return (true, bytes(""));
             } else {
                 return transaction.to.call(transaction.data);

@@ -51,6 +51,10 @@
     "@ethersproject/abstract-provider": "^5.0.8",
     "@ethersproject/abstract-signer": "^5.1.0",
     "@ethersproject/contracts": "^5.0.5",
+    "@openzeppelin/contracts": "^3.3.0",
+    "@openzeppelin/contracts-upgradeable": "^3.3.0",
+    "@typechain/hardhat": "^1.0.1",
+    "ganache-core": "^2.13.2",
     "glob": "^7.1.6",
     "handlebars": "^4.7.7",
     "semver": "^7.3.5"

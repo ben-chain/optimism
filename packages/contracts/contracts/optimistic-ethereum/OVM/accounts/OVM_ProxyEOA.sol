@@ -19,7 +19,7 @@ contract OVM_ProxyEOA {
     /**********
      * Events *
      **********/
-
+    
     event Upgraded(
         address indexed implementation
     );
@@ -80,8 +80,8 @@ contract OVM_ProxyEOA {
         //     "EOAs can only upgrade their own EOA implementation"
         // );
 
-        // _setImplementation(_implementation);
-        // emit Upgraded(_implementation);
+        _setImplementation(_implementation);
+        emit Upgraded(_implementation);
     }
 
     /**
