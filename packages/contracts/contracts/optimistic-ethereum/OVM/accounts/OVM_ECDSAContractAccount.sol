@@ -15,6 +15,7 @@ import { OVM_ETH } from "../predeploys/OVM_ETH.sol";
 
 /* External Imports */
 import { SafeMath } from "@openzeppelin/contracts/math/SafeMath.sol";
+import { Math } from "@openzeppelin/contracts/math/Math.sol";
 
 /**
  * @title OVM_ECDSAContractAccount
@@ -41,6 +42,44 @@ contract OVM_ECDSAContractAccount is iOVM_ECDSAContractAccount {
     // TODO: should be the amount sufficient to cover the gas costs of all of the transactions up
     // to and including the CALL/CREATE which forms the entrypoint of the transaction.
     uint256 constant EXECUTION_VALIDATION_GAS_OVERHEAD = 25000;
+
+
+    /*********************
+     * Private Functions *
+     *********************/
+
+    /**
+     * Compute the intrinsic gas of a transaction
+     * @param _encodedTransaction Signed EIP155 transaction bytes.
+     * @param _isCreate Whether the transaction creates a contract
+     * @return The amount of intrinsic gas
+     */
+    function _intrinsicGas(
+        bytes memory _encodedTransaction,
+        bool _isCreate
+    )
+        private
+        returns (
+            uint256
+        )
+    {
+        uint256 intrinsicGas = SafeMath.mul(
+            _encodedTransaction.length,
+            16
+        );
+        if (_isCreate) {
+            intrinsicGas = SafeMath.add(
+                intrinsicGas,
+                53000
+            );
+        } else {
+            intrinsicGas = SafeMath.add(
+                intrinsicGas,
+                21000
+            );
+        }
+        return intrinsicGas;
+    }
 
 
     /********************
@@ -73,6 +112,14 @@ contract OVM_ECDSAContractAccount is iOVM_ECDSAContractAccount {
             bytes memory
         )
     {
+
+        // Need to make sure that the gas is sufficient to execute the transaction.
+        uint256 gasLimit = SafeMath.mul((transaction.gasLimit % 10000), 10000);
+        require(
+            gasleft() >= gasLimit,
+            "Gas is not sufficient to execute the transaction."
+        );
+
         // Address of this contract within the ovm (ovmADDRESS) should be the same as the
         // recovered address of the user who signed this message. This is how we manage to shim
         // account abstraction even though the user isn't a contract.
@@ -92,13 +139,6 @@ contract OVM_ECDSAContractAccount is iOVM_ECDSAContractAccount {
             "Transaction nonce does not match the expected nonce."
         );
 
-        // TEMPORARY: Disable gas checks for mainnet.
-        // // Need to make sure that the gas is sufficient to execute the transaction.
-        // require(
-        //    gasleft() >= SafeMath.add(transaction.gasLimit, EXECUTION_VALIDATION_GAS_OVERHEAD),
-        //    "Gas is not sufficient to execute the transaction."
-        // );
-
         // Transfer fee to relayer.
         require(
             OVM_ETH(Lib_PredeployAddresses.OVM_ETH).transfer(
@@ -108,15 +148,10 @@ contract OVM_ECDSAContractAccount is iOVM_ECDSAContractAccount {
             "Fee was not transferred to relayer."
         );
 
-        if (_transaction.isCreate) {
-            // TEMPORARY: Disable value transfer for contract creations.
-            require(
-                _transaction.value == 0,
-                "Value transfer in contract creation not supported."
-            );
-
+        if (transaction.isCreate) {
             (address created, bytes memory revertdata) = Lib_ExecutionManagerWrapper.ovmCREATE(
                 _transaction.data
+                callGasLimit
             );
 
             // Return true if the contract creation succeeded, false w/ revertdata otherwise.
