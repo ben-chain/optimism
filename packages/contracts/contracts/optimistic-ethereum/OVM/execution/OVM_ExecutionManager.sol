@@ -711,9 +711,8 @@ contract OVM_ExecutionManager is iOVM_ExecutionManager, Lib_AddressResolver {
             bytes memory _returndata
         )
     {
-        // DELEGATECALL does not change anything about the message context other than value 0.
+        // DELEGATECALL does not change anything about the message context.
         MessageContext memory nextMessageContext = messageContext;
-        nextMessageContext.ovmCALLVALUE = 0;
 
         return _callContract(
             nextMessageContext,
@@ -914,7 +913,7 @@ contract OVM_ExecutionManager is iOVM_ExecutionManager, Lib_AddressResolver {
      */
     function ovmSELFBALANCE()
         override
-        external
+        public
         returns (
             uint256 _BALANCE
         )
@@ -1085,8 +1084,17 @@ contract OVM_ExecutionManager is iOVM_ExecutionManager, Lib_AddressResolver {
         )
     {
         uint256 messageValue = _nextMessageContext.ovmCALLVALUE;
-        // If there is value in this message, we need to transfer the ETH over before switching contexts.
-        if (messageValue > 0) {
+
+        // If the ETH transfer fails (e.g. due to insufficient balance), then treat this as a revert.
+        if (messageValue > ovmSELFBALANCE()) {
+            return (false, hex"");
+        }
+
+        // If there is value in this message, and this is not a call to self, we need to transfer the ETH over before switching contexts.
+        if (
+            messageValue > 0
+            && _nextMessageContext.ovmADDRESS != messageContext.ovmADDRESS
+        ) {
             // Handle out-of-intrinsic gas consistent with EVM behavior -- the subcall "appears to revert"
             if (gasleft() < CALL_WITH_VALUE_INTRINSIC_GAS) {
                 return (false, hex"");
@@ -1105,7 +1113,7 @@ contract OVM_ExecutionManager is iOVM_ExecutionManager, Lib_AddressResolver {
                 messageValue
             );
 
-            // If the ETH transfer fails (e.g. due to insufficient balance), then treat this as a revert.
+            // This should always pass since we guaranteed above that the balance is enough to succeed.  Only reason would be running out of gas.
             if (!transferredOvmEth) {
                 return (false, hex"");
             }
@@ -1147,9 +1155,13 @@ contract OVM_ExecutionManager is iOVM_ExecutionManager, Lib_AddressResolver {
             (success, returndata) = _contract.call{gas: _gasLimit}(_data);
         }
 
-        // If the message threw an exception, its value should be returned back to the sender.
+        // If the message threw an exception and was sending OVM_ETH somewhere else, its value should be returned back to the sender.
         // So, we force it back, BEFORE returning the messageContext to the previous addresses.
-        if (messageValue > 0 && !success) {
+        if (
+            !success
+            && messageValue > 0 
+            && _nextMessageContext.ovmADDRESS != prevMessageContext.ovmADDRESS
+        ) {
             bool transferredOvmEth = _attemptForcedEthTransfer(
                 prevMessageContext.ovmADDRESS,
                 messageValue
