@@ -154,7 +154,7 @@ describe('Basic RPC tests', () => {
     })
 
     it('should correctly report OOG for contract creations', async () => {
-      const factory = await ethers.getContractFactory('TestOOG')
+      const factory = await ethers.getContractFactory('TestOOGInConstructor')
 
       await expect(factory.connect(wallet).deploy()).to.be.rejectedWith(
         'gas required exceeds allowance'
@@ -236,7 +236,7 @@ describe('Basic RPC tests', () => {
     it('correctly exposes revert data for contract creations', async () => {
       const req: TransactionRequest = {
         ...revertingDeployTx,
-        gasLimit: 17700899, // override gas estimation
+        gasLimit: 27700899, // override gas estimation
       }
 
       const tx = await wallet.sendTransaction(req)
@@ -353,7 +353,7 @@ describe('Basic RPC tests', () => {
         to: DEFAULT_TRANSACTION.to,
         value: 0,
       })
-      expect(estimate).to.be.eq(5920012)
+      expect(estimate).to.be.eq(5920013)
     })
 
     it('should return a gas estimate that grows with the size of data', async () => {

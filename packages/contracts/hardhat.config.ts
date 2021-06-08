@@ -53,7 +53,7 @@ const config: HardhatUserConfig = {
     },
   },
   ovm: {
-    solcVersion: '0.7.6',
+    solcVersion: '0.7.6-experimental_callvalue',
   },
   typechain: {
     outDir: 'dist/types',
@@ -82,7 +82,6 @@ if (
   process.env.CONTRACTS_RPC_URL
 ) {
   config.networks[process.env.CONTRACTS_TARGET_NETWORK] = {
-    accounts: [process.env.CONTRACTS_DEPLOYER_KEY],
     url: process.env.CONTRACTS_RPC_URL,
     live: true,
     saveDeployments: true,
