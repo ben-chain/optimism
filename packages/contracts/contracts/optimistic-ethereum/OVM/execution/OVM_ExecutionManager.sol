@@ -871,6 +871,11 @@ contract OVM_ExecutionManager is iOVM_ExecutionManager, Lib_AddressResolver {
         );
     }
 
+
+    /***************************************
+     * Public Functions: ETH Value Opcodes *
+     ***************************************/
+
     /**
      * @notice Overrides BALANCE.
      * @param _contract Address of the contract to query the OVM_ETH balance of.
@@ -920,6 +925,7 @@ contract OVM_ExecutionManager is iOVM_ExecutionManager, Lib_AddressResolver {
     {
         return ovmBALANCE(ovmADDRESS());
     }
+
 
     /***************************************
      * Public Functions: Execution Context *
@@ -1085,7 +1091,8 @@ contract OVM_ExecutionManager is iOVM_ExecutionManager, Lib_AddressResolver {
     {
         uint256 messageValue = _nextMessageContext.ovmCALLVALUE;
 
-        // If the ETH transfer fails (e.g. due to insufficient balance), then treat this as a revert.
+        // If there is not sufficient balance to send,, then treat this as a revert.
+        // This mirrors EVM behavior, see https://github.com/ethereum/go-ethereum/blob/2dee31930c9977af2a9fcb518fb9838aa609a7cf/core/vm/evm.go#L298
         if (messageValue > ovmSELFBALANCE()) {
             return (false, hex"");
         }
@@ -1095,15 +1102,21 @@ contract OVM_ExecutionManager is iOVM_ExecutionManager, Lib_AddressResolver {
             messageValue > 0
             && _nextMessageContext.ovmADDRESS != messageContext.ovmADDRESS
         ) {
-            // Handle out-of-intrinsic gas consistent with EVM behavior -- the subcall "appears to revert"
+            // Handle out-of-intrinsic gas consistent with EVM behavior -- the subcall "appears to revert" if we don't have enough gas to transfer the ETH.
+            // Similar to dynamic gas cost of value exceeding gas here:
+            // https://github.com/ethereum/go-ethereum/blob/c503f98f6d5e80e079c1d8a3601d188af2a899da/core/vm/interpreter.go#L268-L273 
             if (gasleft() < CALL_WITH_VALUE_INTRINSIC_GAS) {
                 return (false, hex"");
             }
 
-            // If not out of intrinsic gas, we guarantee that that intrinsic gas is reserved for consumption by the EM and OVM_ETH.
+            // If there *is* enough gas to transfer ETH, then we need to make sure this amount of gas is reserved (i.e. not
+            // given to the _contract.call below) to guarantee that _handleExternalMessage can't run out of gas.
+            // In particular, in the event that the call fails, we will need to transfer the ETH back to the sender.
+            // Taking the lesser of _gasLimit and gasleft() - CALL_WITH_VALUE_INTRINSIC_GAS guarantees that the second
+            // _attemptForcedEthTransfer below, if needed, always has enough gas to succeed.
             _gasLimit = Math.min(
                 _gasLimit,
-                gasleft() - CALL_WITH_VALUE_INTRINSIC_GAS
+                gasleft() - CALL_WITH_VALUE_INTRINSIC_GAS // Cannot overflow due to the above check.
             );
 
             // Now transfer the value of the call.
@@ -1168,8 +1181,9 @@ contract OVM_ExecutionManager is iOVM_ExecutionManager, Lib_AddressResolver {
             );
 
             // Since we transferred it in above and the call reverted, the transfer back should always pass.
-            // If it did not, this is an OOG, and we have to make the parent out-of-gas as well.
-            // TODO: should we also enforce there is always enough extra gas to make it past this step?  This would mean this condition is only triggered due to some critical bug in the ERC20 implementation.
+            // This code path should NEVER be triggered since we sent `messageValue` worth of OVM_ETH into the target
+            // and reserved sufficient gas to execute the transfer, but in case there is some edge case which has
+            // been missed, we revert the entire frame (and its parent) to make sure the ETH gets sent back.
             if (!transferredOvmEth) {
                 _revertWithFlag(RevertFlag.OUT_OF_GAS);
             }
