@@ -54,6 +54,7 @@ export const waitForXDomainTransaction = async (
 
   // await it if needed
   tx = await tx
+  console.log(tx.hash)
   // get the receipt and the full transaction
   const receipt = await tx.wait()
   const fullTx = await src.provider.getTransaction(tx.hash)
