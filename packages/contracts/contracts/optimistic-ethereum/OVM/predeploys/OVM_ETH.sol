@@ -3,6 +3,7 @@ pragma solidity >0.5.0 <0.8.0;
 
 /* Library Imports */
 import { Lib_PredeployAddresses } from "../../libraries/constants/Lib_PredeployAddresses.sol";
+import { SafeMath } from "@openzeppelin/contracts/math/SafeMath.sol";
 
 /* Contract Imports */
 import { L2StandardERC20 } from "../../libraries/standards/L2StandardERC20.sol";
@@ -17,6 +18,7 @@ import { IWETH9 } from "../../libraries/standards/IWETH9.sol";
  * Runtime target: OVM
  */
 contract OVM_ETH is L2StandardERC20, IWETH9 {
+    using SafeMath for uint256;
 
     /***************
      * Constructor *
@@ -35,6 +37,10 @@ contract OVM_ETH is L2StandardERC20, IWETH9 {
     /******************************
      * Custom WETH9 Functionality *
      ******************************/
+
+    /**
+     * Implements the WETH9 fallback functionality.
+     */
     fallback() external payable {
         deposit();
     }
@@ -75,5 +81,34 @@ contract OVM_ETH is L2StandardERC20, IWETH9 {
 
         // Other than emitting an event, OVM_ETH already is native ETH, so we don't need to do anything else.
         emit Withdrawal(msg.sender, _wad);
+    }
+
+
+    /**********************************
+     * Overridden ERC20 Functionality *
+     **********************************/
+
+    /**
+     * This override allows for OVM_ETH to be sent to address(0), which is
+     * not normally permitted by the OZ ERC20 implementation.
+     * @param _sender Address sending the OVM_ETH.
+     * @param _recipient Address recieving the OVM_ETH.
+     * @param _amount The amount of OVM_ETH being sent.
+     */
+    function _transfer(
+        address _sender,
+        address _recipient,
+        uint256 _amount
+    )
+        internal
+        virtual
+        override
+    {
+        // super._transfer disallows this condition, but we can just interpret it as a burn.
+        if (_recipient == address(0)) {
+            _burn(_sender, _amount);
+        } else {
+            super._transfer(_sender, _recipient, _amount);
+        }
     }
 }
